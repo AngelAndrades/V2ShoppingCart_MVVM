@@ -1,0 +1,186 @@
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.common.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.default.min.css">
+
+<script src="/sites/VHAV2cartapp/SiteAssets/jquery-3.2.1.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/kendo.all.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/order.js"></script>
+
+<div id="application"></div>
+
+<script type="text/x-kendo-template" id="layout-template">
+    <div id="wrapper">
+        <header id="appheader">
+            <h2>VISN 2 Network Communications Orders</h2>
+        </header>
+
+        <div id="main-section">
+            <section id="appcontent"></section>
+        </div>
+
+        <footer id="appfooter">
+            Copyright &copy; 2018, Department of Veterans Affairs
+        </footer>
+    </div>
+</script>
+
+<script type="text/x-kendo-template" id="index-template">
+    <div style="margin-bottom:20px;"></div>
+    <div id="grid" data-role="grid" data-editable="false" data-column-menu="true" data-pageable="{ pageSizes: [10, 25, 50, 'All'] }"
+        data-sortable="true" data-filterable="true" data-reorderable="true" data-columns="[
+            { 'field': 'id', 'title': 'ID', 'hidden': 'true' },
+            { 'field': 'fullname', 'title': 'Full Name' },
+            { 'field': 'email', 'title': 'E-mail', 'hidden': 'true' },
+            { 'field': 'vamc', 'title': 'VAMC' },
+            { 'field': 'address', 'title': 'Address', 'hidden': 'true' },
+            { 'field': 'phone', 'title': 'Phone', 'width': '150px' },
+            { 'field': 'fax', 'title': 'Fax', 'hidden': 'true' },
+            { 'field': 'orderno', 'title': 'Order Num' },
+            { 'field': 'orderdate', 'title': 'Date Ordered', 'width': '150px' },
+            { 'field': 'status', 'title': 'Order Status', 'width': '150px' },
+            { 'field': 'shipmethod', 'title': 'Shipping Method', 'hidden': 'true' },
+            { 'field': 'tracking', 'title': 'Tracking Code', 'hidden': 'true' },
+            { 'field': 'comments', 'title': 'Comments', 'hidden': 'true' },
+            { 'field': 'modified', 'title': 'Modified Date', 'hidden': 'true' },
+            { 'command': [{ 'text': 'Get Order Details', click: gridModel.getOrderInfo }], title: ' ', 'width': '150px' }
+        ]" data-bind="source: orders">
+    </div>
+    <div style="margin-bottom:40px;"></div>
+</script>
+
+<script type="text/x-kendo-template" id="details-template">
+    <div>
+        <button class="order-now" data-bind="click: getOrders">Return to Orders</button>&nbsp;&nbsp;
+        <button class="order-now" data-bind="click: updateOrder">Update Status</button>&nbsp;&nbsp;
+        <button class="order-now" onclick="window.print(); return false;">Print</button>
+    </div>
+    <div id="orderform">
+        <ul id="fieldlist">
+            <li>
+                <label for="status" class="k-label k-form-label">Order Status</label>
+                <input id="ddStatus" type="text" data-role="dropdownlist" data-value-field="text" data-text-field="text" data-bind="value: formdata.status, source: orderstatus"
+                    class="k-textbox" />
+            </li>
+            <li>
+                <label for="fullname" class="k-label k-form-label">Full Name</label>
+                <input type="text" data-bind="value: formdata.fullname" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="email" class="k-label k-form-label">E-mail</label>
+                <input type="text" data-bind="value: formdata.email" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="vamc" class="k-label k-form-label">VAMC</label>
+                <input type="text" data-bind="value: formdata.vamc" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="address" class="k-label k-form-label">Address</label>
+                <textarea data-bind="value: formdata.address" class="k-textbox" style="height:100px; padding:5px;" readonly />
+            </li>
+            <li>
+                <label for="phone" class="k-label k-form-label">Phone</label>
+                <input type="text" data-bind="value: formdata.phone" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="fax" class="k-label k-form-label">Mail Code</label>
+                <input type="text" data-bind="value: formdata.fax" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="orderdate" class="k-label k-form-label">Date Ordered</label>
+                <input type="text" data-bind="value: formdata.orderdate" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="orderno" class="k-label k-form-label">Order No</label>
+                <input type="text" data-bind="value: formdata.orderno" class="k-textbox" readonly />
+            </li>
+            <li>
+                <label for="shipmethod" class="k-label k-form-label">Shipping Method</label>
+                <input id="ddShipMethod" type="text" data-role="dropdownlist" data-value-field="text" data-text-field="text" data-bind="value: formdata.shipmethod, source: shippingmethod"
+                    class="k-textbox" />
+            </li>
+            <li>
+                <label for="tracking" class="k-label k-form-label">Tracking Code</label>
+                <input type="text" data-bind="value: formdata.tracking" placeholder="Enter the tracking number if available" class="k-textbox"
+                />
+            </li>
+            <li>
+                <label for="comments" class="k-label k-form-label">Comments</label>
+                <textarea data-bind="value: formdata.comments" class="k-textbox" style="height:100px; padding:5px;" />
+            </li>
+            <!--
+            <li>
+                <label for="modified" class="k-label k-form-label">Modified Date</label>
+                <input type="text" data-bind="value: formdata.modified" class="k-textbox" readonly />
+            </li>
+            -->
+        </ul>
+        <br />
+        <br />
+        <div id="details-grid" data-role="grid" data-selectable="false" data-pageable="false" data-columns="[
+                { 'field': 'itemname', 'title': 'Item Name', 'width': '70%' },
+                { 'field': 'itemno', 'title': 'Item No', 'width': '15%' },
+                { 'field': 'quantity', 'title': 'Quantity', 'width': '15%' }
+            ]" data-bind="source: orderdata" style="width:600px; margin-bottom:40px;">
+        </div>
+    </div>
+</script>
+
+<style>
+    #fieldlist {
+        list-style: none outside none;
+        line-height: 2.5em;
+        width: 600px;
+    }
+
+    .k-form-label {
+        font-weight: bold;
+        display: inline-block;
+        width: 100px;
+    }
+
+    .k-textbox {
+        width: 400px;
+        display: inline-block;
+    }
+
+    .order-now,
+    .order-now:hover {
+        transition: all .3s;
+        -moz-transition: all .3s;
+        -webkit-transition: all .3s;
+        -o-transition: all .3s;
+    }
+
+    .order-now:hover {
+        color: #fff;
+        background: rgb(214, 0, 65);
+        background: -moz-linear-gradient(top, rgba(169, 0, 64, 1) 0%, rgba(214, 0, 65, 1) 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(169, 0, 64, 1)), color-stop(100%, rgba(214, 0, 65, 1)));
+        background: -webkit-linear-gradient(top, rgba(169, 0, 64, 1) 0%, rgba(214, 0, 65, 1) 100%);
+        background: -o-linear-gradient(top, rgba(169, 0, 64, 1) 0%, rgba(214, 0, 65, 1) 100%);
+        background: -ms-linear-gradient(top, rgba(169, 0, 64, 1) 0%, rgba(214, 0, 65, 1) 100%);
+        background: linear-gradient(to bottom, rgba(169, 0, 64, 1) 0%, rgba(214, 0, 65, 1) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d60041', endColorstr='#a90040', GradientType=0);
+        cursor: pointer;
+    }
+
+    .order-now {
+        border: none;
+        height: 45px;
+        width: 150px;
+        display: inline-block;
+        margin-top: 20px;
+        color: #fff;
+        font-size: 13px;
+        vertical-align: middle;
+        text-transform: uppercase;
+        text-align: center;
+        background: rgb(214, 0, 65);
+        background: -moz-linear-gradient(top, rgba(214, 0, 65, 1) 0%, rgba(169, 0, 64, 1) 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(214, 0, 65, 1)), color-stop(100%, rgba(169, 0, 64, 1)));
+        background: -webkit-linear-gradient(top, rgba(214, 0, 65, 1) 0%, rgba(169, 0, 64, 1) 100%);
+        background: -o-linear-gradient(top, rgba(214, 0, 65, 1) 0%, rgba(169, 0, 64, 1) 100%);
+        background: -ms-linear-gradient(top, rgba(214, 0, 65, 1) 0%, rgba(169, 0, 64, 1) 100%);
+        background: linear-gradient(to bottom, rgba(214, 0, 65, 1) 0%, rgba(169, 0, 64, 1) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d60041', endColorstr='#a90040', GradientType=0);
+    }
+</style>

@@ -1,0 +1,102 @@
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.common.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.default.min.css">
+
+<script src="/sites/VHAV2cartapp/SiteAssets/jquery-3.2.1.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/kendo.all.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/jszip.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/map.js"></script>
+
+<h2>Top 10 Popular Items Sold (Quantity)</h2>
+<p id="gendate1"></p>
+<br />
+<div id="chart1" style="width:80%"></div>
+<br />
+<br />
+<h2>Top 10 Item Ordered (Frequency)</h2>
+<p id="gendate2"></p>
+<br />
+<div id="chart2" style="width:80%"></div>
+
+<script>
+    var chart1Map = new Map();
+    var chart2Map = new Map();
+
+    $(function () {
+        // Set todays date
+        var today = new Date();
+        $('#gendate1').append(today.toLocaleDateString());
+        $('#gendate2').append(today.toLocaleDateString());
+
+
+        // Data
+        var reportData = $.ajax({
+            method: 'GET',
+            url: _spPageContextInfo.webAbsoluteUrl + "/_api/web/lists/getbytitle('Items Ordered')/items?$select=Id,ItemName,ItemNo,Quantity",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Accept", "application/json;odata=verbose")
+            }
+        })
+            .done(function (data) {
+                $.each(data.d.results, function (key, val) {
+                    if (chart1Map.containsKey(val.ItemNo)) chart1Map.put(val.ItemNo, (val.Quantity + chart1Map.get(val.ItemNo)));
+                    else chart1Map.put(val.ItemNo, val.Quantity);
+
+                    if (chart2Map.containsKey(val.ItemNo)) chart2Map.put(val.ItemNo, (1 + chart2Map.get(val.ItemNo)));
+                    else chart2Map.put(val.ItemNo, 1);
+                });
+            });
+
+        $.when(reportData).then(function () {
+
+            console.log(sortObject(chart1Map.map, 'desc').slice(0, 9));
+            console.log(sortObject(chart2Map.map, 'desc').slice(0, 9));
+
+            $("#chart1").kendoChart({
+                dataSource: {
+                    data: sortObject(chart1Map.map, 'desc').slice(0, 9)
+                },
+                legend: { visible: false },
+                seriesDefaults: {
+                    type: "column",
+                    labels: { visible: true }
+                },
+                series: [
+                    { field: "value", categoryField: "key", color: '#0072c6' }
+                ],
+                valueAxis: {
+                    majorGridLines: { visible: true },
+                    visible: true
+                },
+                categoryAxis: {
+                    labels: { template: 'Item No: #: value #' },
+                    majorGridLines: { visible: false },
+                    line: { visible: false }
+                }
+            });
+
+            $("#chart2").kendoChart({
+                dataSource: {
+                    data: sortObject(chart2Map.map, 'desc').slice(0, 9)
+                },
+                legend: { visible: false },
+                seriesDefaults: {
+                    type: "column",
+                    labels: { visible: true }
+                },
+                series: [
+                    { field: "value", categoryField: "key", color: '#32B232' }
+                ],
+                valueAxis: {
+                    majorGridLines: { visible: true },
+                    visible: true
+                },
+                categoryAxis: {
+                    labels: { template: 'Item No: #: value #' },
+                    majorGridLines: { visible: false },
+                    line: { visible: false }
+                }
+            });
+
+        });
+    })
+</script>

@@ -1,0 +1,78 @@
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.common.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.default.min.css">
+
+<script src="/sites/VHAV2cartapp/SiteAssets/jquery-3.2.1.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/kendo.all.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/jszip.min.js"></script>
+
+<h2>Out of Stock Report</h2>
+<p id="gendate"></p>
+<br />
+<div id="grid"></div>
+
+<script>
+    $(function () {
+        var resArray = [];
+
+        // Set todays date
+        var today = new Date();
+        $('#gendate').append(today.toLocaleDateString());
+
+        // Data
+        var reportData = $.ajax({
+            method: 'GET',
+            url: _spPageContextInfo.webServerRelativeUrl +  "/_api/web/lists/getbytitle('Catalog')/items?$select=ID,Title,Inventory,Category,Item_x0020_No&$filter=Inventory eq 0&$top=1000",
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader("Accept", "application/json;odata=verbose")
+            }
+        })
+            .done(function (data) {
+                $.each(data.d.results, function (key, val) {
+
+                    var o = {};
+                    o['id'] = val.Id;
+                    o['itemname'] = val.Title;
+                    o['itemno'] = val.Item_x0020_No;
+                    o['quantity'] = val.Inventory;
+                    o['category'] = val.Category;
+
+                    resArray.push(o);
+                });
+            });
+
+        $.when(reportData).then(function () {
+            var ds = new kendo.data.DataSource({
+                schema: { model: {} },
+                data: resArray,
+                pageSize: 25,
+                page: 1,
+                //group: { field: 'category' },
+                sort: { field: 'itemname', dir: 'asc' }
+            });
+
+            $('#grid').kendoGrid({
+                toolbar: ['excel', 'pdf'],
+                excel: {
+                    fileName: 'inventory report.xlsx'
+                },
+                pdf: {
+                    fileName: 'inventory report.pdf'
+                },
+                dataSource: ds,
+                columnMenu: true,
+                groupable: true,
+                filterable: true,
+                sortable: true,
+                pageable: { pageSizes: [ 10, 25, 50, 'All' ] },
+                reorderable: true,
+                columns: [
+                    { field: 'id', hidden: true },
+                    { field: 'itemname', title: 'Item Name' },
+                    { field: 'itemno', title: 'Item No' },
+                    { field: 'quantity', title: 'Items in Stock' },
+                    { field: 'category', title: 'Category', hidden: false }
+                ]
+            })
+        });
+    })
+</script>

@@ -1,0 +1,223 @@
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.common.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.default.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/cart.css">
+
+<script src="/sites/VHAV2cartapp/SiteAssets/jquery-3.2.1.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/kendo.all.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/jQueryMD5.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/cart.js"></script>
+
+<div id="application"></div>
+
+<script type="text/x-kendo-template" id="layout-template">
+    <div id="wrapper">
+        <header id="appheader">
+            <div id="cartheader">
+                Shopping Cart
+                <span class="headercount" data-bind="text: cart.contentsCount">0</span> Items
+            </div>
+        </header>
+
+        <div id="main-section">
+            <section id="sect-cart-info"></section>
+            <section id="appcontent"></section>
+        </div>
+
+        <footer id="appfooter">
+            Copyright &copy; 2018, Department of Veterans Affairs
+        </footer>
+    </div>
+</script>
+
+<script type="text/x-kendo-template" id="index-template">
+    <p style="padding: 10px;">
+        <span style="float:left;">
+            <input class="k-textbox" type="textbox" data-bind="value: searchItem" placeholder="Search by Title" />&nbsp;
+            <button class="k-button" data-bind="click: filterItems">Filter</button>&nbsp;
+            <button class="k-button" data-bind="click: clearFilter">Clear</button>
+        </span>
+        <span id="ddfilter" style="float:right;">
+            Filter by Category:&nbsp;&nbsp;
+            <input data-role="dropdownlist" data-auto-bind="false" visible: true enabled: true data-text-field="category" data-value-field="value"
+                data-bind="value: selectedCategory, source: categories, events: { change: onChange }" />
+        </span>
+    </p>
+    <div style="clear:both"></div>
+    <ul data-role="listview" data-bind="source: items" data-template="item" id="main"></ul>
+    <div id="pager" data-role="pager" data-page-sizes="true" data-bind="source: items" data-auto-bind="true"></div>
+</script>
+
+<script type="text/x-kendo-template" id="item">
+    <li class="item">
+        <a class="view-details" href="\#/menu/#: id #">
+            <img class="main-image" data-bind="attr: { src: image, alt: title }" />
+            <strong data-bind="text: title"></strong>
+            <br /> Item \#
+            <span data-bind="text: itemno"></span>
+        </a>
+        <br /> In Stock:
+        <span data-bind="text: inventory"></span>
+        <!--
+        <br />
+        Quantity: <input type="text" id="int_only" data-role="numerictextbox" data-min="#: min_quantity #" data-max="#: inventory #" data-decimals="0" data-step="#: min_quantity #" data-format="\\#" data-bind="value: quantity" style="width:100px;">
+-->
+        <button class="add-to-cart" data-bind="click: addToCart">Add to cart</button>
+    </li>
+</script>
+
+<script type="text/x-kendo-template" id="cart-preview-template">
+    <div id="cart-info" data-bind="attr: { class: cartContentsClass }">
+
+        <ul data-role="listview" data-bind="source: cart.contents" data-template="cart-item" id="cart-list"></ul>
+
+        <div id="cart-links">
+            <span>
+                <p>
+                    <button class="buy" id="empty-cart" data-bind="click: emptyCart">Empty Cart</button>
+                </p>
+                <p>
+                    <button class="buy" id="checkout" data-bind="click: checkout">Checkout</button>
+                </p>
+            </span>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-kendo-template" id="cart-item">
+    <li class="selected-item">
+        <a data-bind="click: removeFromCart">
+            <img width="100" height="100" data-bind="attr: { src: item.image, alt: item.title }" />
+        </a>
+        <span>Quantity:
+            <span data-bind="text: quantity"></span>
+        </span>
+    </li>
+</script>
+
+<script type="text/x-kendo-template" id="detail-template">
+    <div id="details">
+        <a data-bind="attr: {href: previousHref }" id="navigate-prev"></a>
+        <div id="detail-info">
+            <img class="main-image" data-bind="attr: { src: imgUrl, alt: current.title }" />
+            <div id="description">
+                <h1 data-bind="text: current.title"></h1>
+                <p>
+                    <span data-bind="text: current.description"></span>
+                    <br /> Item Number:
+                    <span data-bind="text: current.itemno"></span>
+                    <br /> In Stock:
+                    <span data-bind="text: current.inventory"></span>
+                    <br /> Minimum Order:
+                    <span data-bind="text: current.min_quantity"></span>
+                    <span data-bind="html: pdfLink"></span>
+                </p>
+                <div id="details-total">
+                    <button class="buy" data-bind="click: addToCart">Add to cart</button>
+                    <button class="buy" data-bind="click: continueShopping">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+        <a data-bind="attr: { href: nextHref }" id="navigate-next"></a>
+    </div>
+</script>
+
+<script type="text/x-kendo-template" id="checkout-template">
+    <div id="details-checkout">
+        <h1>Order Details</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                </tr>
+            </thead>
+            <tbody data-role="listview" data-bind="source: cart.contents" data-template="large-cart-item">
+            </tbody>
+        </table>
+        <div class="checkout_btn">
+            <button class="buy" data-bind="click: continueShopping">continue shopping</button>
+            <button class="buy" data-bind="click: emptyCart">cancel order</button>
+            <button class="buy" data-bind="click: proceed">order now</button>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-kendo-template" id="large-cart-item">
+    <tr>
+        <td>
+            <div class="cart-image-wrapper">
+                <img data-bind="attr: { src: item.image, alt: item.title }" width="200" height="100" />
+            </div>
+            <span class="product-name" data-bind="text: item.title"></span>
+            <br />
+            <p>
+                Item Numner:
+                <span data-bind="text: item.itemno"></span>
+                <br /> In Stock:
+                <span data-bind="text: item.inventory"></span>
+                <br /> Minimum Quantity:
+                <span data-bind="text: item.min_quantity"></span>
+            </p>
+        </td>
+        <td>
+            <input type="text" id="int_only" data-role="numerictextbox" data-min="#: item.min_quantity #" data-max="#: item.inventory #" data-decimals="0"
+                data-step="#: item.min_quantity #" data-format="\\#" data-bind="value: quantity">
+            <br />
+            <br />
+            <a data-bind="click: removeFromCart">remove from cart</a>
+        </td>
+    </tr>
+</script>
+
+<script type="text/x-kendo-template" id="customer-template">
+    <div id="customer_info">
+        <ul id="fieldlist">
+            <li>
+                <label for="fullname" class="required">Full Name</label>
+                <input type="text" id="fullname" data-bind="value: fullname" class="k-textbox" placeholder="enter full name" required="required"
+                />
+            </li>
+            <li>
+                <label for="email" class="required">E-mail</label>
+                <input type="email" id="email" data-bind="value: email" class="k-textbox" placeholder="first.last@va.gov" required="required"
+                />
+            </li>
+            <li>
+                <span id="ddType">
+                    <label for="sitetype">Type of Site</label>
+                    <input data-role="dropdownlist" data-auto-bind="false" visible="true" enabled="true" data-text-field="sitetype" data-value-field="value"
+                        data-bind="value: selectedType, source: locType, events: { change: onChange }" required="required" />
+                </span>
+            </li>
+            <li>
+                <span id="ddLocation">
+                    <label for="vamc">VAMC/CBOC</label>
+                    <input data-role="dropdownlist" data-auto-bind="false" visible="true" enabled="true" data-text-field="Facility" data-value-field="Title"
+                        data-bind="value: selectedAddress, source: addresses, events: { change: onChange }" class="k-textbox"
+                        required="required" />
+                </span>
+            </li>
+            <li>
+                <label for="siteid">Site Code</label>
+                <input type="text" id="siteid" data-bind="value: siteid" class="k-textbox" readonly="readonly" required="required" />
+            </li>
+            <li>
+                <label for="address">Address</label>
+                <textarea id="address" data-bind="value: address" class="k-textbox" required="required" />
+                <input type="hidden" id="state" data-bind="value: state" class="k-textbox" />
+            </li>
+            <li>
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" data-bind="value: phone" class="k-textbox" required="required" />
+            </li>
+            <li>
+                <label for="fax">Mail Code</label>
+                <input type="text" id="fax" data-bind="value: fax" class="k-textbox" />
+            </li>
+            <li id="status"></li>
+        </ul>
+    </div>
+    <div class="checkout_btn">
+        <button class="buy" data-bind="click: submitOrder">Submit Order</button>
+    </div>
+</script>

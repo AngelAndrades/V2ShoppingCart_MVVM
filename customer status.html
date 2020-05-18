@@ -1,0 +1,194 @@
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.common.min.css">
+<link rel="stylesheet" href="/sites/VHAV2cartapp/SiteAssets/kendo.default.min.css">
+
+<script src="/sites/VHAV2cartapp/SiteAssets/jquery-3.2.1.min.js"></script>
+<script src="/sites/VHAV2cartapp/SiteAssets/kendo.all.min.js"></script>
+
+<style>
+    ul {
+        list-style-type: none;
+        display: block;
+        width: 330px;
+    }
+
+    li {
+        padding-bottom: 10px;
+    }
+
+    label {
+        font-weight: bold;
+    }
+
+    textarea.k-textbox {
+        width: 300px;
+        padding: 10px;
+    }
+
+    input.k-textbox {
+        width: 300px;
+    }
+</style>
+
+<div class="k-fieldset">
+    <div style="float:left;">
+        <ul>
+            <li>
+                <label for="customername" class="k-label">Customer Name</label>
+                <br />
+                <input type="text" readonly="readonly" id="customername" class="k-textbox" />
+            </li>
+            <li>
+                <label for="vamc" class="k-label">VAMC</label>
+                <br />
+                <input type="text" readonly="readonly" id="vamc" class="k-textbox" />
+            </li>
+            <li>
+                <label for="address" class="k-label">Shipping Address</label>
+                <br />
+                <textarea id="address" class="k-textbox" rows="5" readonly="readonly"></textarea>
+            </li>
+            <li>
+                <label for="orderno" class="k-label">Order No</label>
+                <br />
+                <input type="text" readonly="readonly" id="orderno" class="k-textbox" />
+            </li>
+            <li>
+                <label for="orderdate" class="k-label">Order Date</label>
+                <br />
+                <input type="text" readonly="readonly" id="orderdate" class="k-textbox" />
+            </li>
+            <li>
+                <label for="orderstatus" class="k-label">Status</label>
+                <br />
+                <input type="text" readonly="readonly" id="orderstatus" class="k-textbox" />
+            </li>
+        </ul>
+    </div>
+    <div id="ShippingInfo" style="float:left; display:none;">
+        <ul>
+            <li>
+                <label for="shipmethod" class="k-label">Shipping Method</label>
+                <br />
+                <input type="text" readonly="readonly" id="shipmethod" class="k-textbox" />
+            </li>
+            <li>
+                <label for="trackno" class="k-label">Tracking No</label>
+                <br />
+                <input type="text" readonly="readonly" id="trackno" class="k-textbox" />
+            </li>
+            <li>
+                <label for="modified" class="k-label">Updated Date</label>
+                <br />
+                <input type="text" readonly="readonly" id="modified" class="k-textbox" />
+            </li>
+            <li>
+                <label for="comments" class="k-label">Comments</label>
+                <br />
+                <textarea id="comments" class="k-textbox" rows="12" readonly="readonly"></textarea>
+            </li>
+        </ul>
+    </div>
+</div>
+<br />
+<br />
+<div id="grid" style="clear:both; margin-left:40px; width:670px;"></div>
+
+<script>
+    var itemsArray = [];
+
+    $.getQuery = function (query) {
+        query = query.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+        var expr = "[\\?&]" + query + "=([^&#]*)";
+        var regex = new RegExp(expr);
+        var results = regex.exec(window.location.href);
+        if (results !== null) {
+            return results[1];
+            return decodeURIComponent(results[1].replace(/\+/g, " "));
+        } else {
+            return false;
+        }
+    };
+
+    $(function () {
+        // Data
+        var ordersAsync = $.ajax({
+                method: 'GET',
+                url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/GetByTitle('Orders')/items?$select=Order_x0020_ID,OrderStatus,ShippingMethod,TrackingCode,Comments,Modified,Title,Address,VAMC,Created&$filter=Order_x0020_ID eq '" +
+                    $.getQuery('orderno') + "'",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Accept", "application/json;odata=verbose")
+                }
+            })
+            .done(function (data) {
+                var order = data.d.results;
+
+                var createdDate = new Date(Date.parse(order[0].Created));
+                var modifiedDate = new Date(Date.parse(order[0].Modified));
+
+                $('#customername').val(order[0].Title);
+                $('#vamc').val(order[0].VAMC);
+                $('#address').val(order[0].Address);
+                $('#orderno').val(order[0].Order_x0020_ID);
+                $('#orderdate').val(createdDate.toDateString());
+                $('#orderstatus').val(order[0].OrderStatus);
+                $('#shipmethod').val(order[0].ShippingMethod);
+                $('#trackno').val(order[0].TrackingCode);
+                $('#modified').val(modifiedDate.toDateString());
+                $('#comments').val(order[0].Comments);
+
+                if ($('#orderstatus').val() === 'Processing' || $('#orderstatus').val() === '') $(
+                    '#ShippingInfo').hide();
+                else $('#ShippingInfo').show();
+            });
+
+        var itemsAsync = $.ajax({
+                method: 'GET',
+                url: _spPageContextInfo.webServerRelativeUrl + "/_api/web/lists/GetByTitle('Items%20Ordered')/items?$select=ItemName,ItemNo,Quantity&$filter=Title eq '" +
+                    $.getQuery('orderno') + "'",
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("Accept", "application/json;odata=verbose")
+                }
+            })
+            .done(function (data) {
+                itemsArray = data.d.results.slice();
+                console.log(itemsArray);
+
+                var ds = new kendo.data.DataSource({
+                    schema: {
+                        model: {}
+                    },
+                    data: itemsArray,
+                    sort: {
+                        field: 'ItemName',
+                        dir: 'asc'
+                    }
+                })
+
+                $('#grid').kendoGrid({
+                    dataSource: ds,
+                    columnMenu: false,
+                    groupable: false,
+                    filterable: false,
+                    sortable: false,
+                    pageable: false,
+                    reorderable: false,
+                    columns: [{
+                            field: 'ItemName',
+                            title: 'Item Name'
+                        },
+                        {
+                            field: 'ItemNo',
+                            title: 'Item No',
+                            width: '100px'
+                        },
+                        {
+                            field: 'Quantity',
+                            title: 'Quantity',
+                            width: '100px'
+                        }
+                    ]
+                });
+
+            });
+    })
+</script>
